@@ -1,32 +1,8 @@
 # DATABASE SCHEMA - KIẾN TRÚC HỆ THỐNG LUYỆN THI TIẾNG ANH
 
-## 1. User
+> **Lưu ý về User Authentication**: Hệ thống sử dụng **AWS Cognito** để quản lý user (đăng ký, đăng nhập, authentication). User data (username, email, password, is_admin) được lưu trong Cognito, không có User table trong database. Lambda functions nhận `user_id` từ JWT token để truy xuất dữ liệu.
 
-Lưu trữ thông tin người dùng trong hệ thống.
-
-**Đối tượng chính**: User
-
-**ID Range**: 0 - 999,999
-
-```json
-{
-  "user_id": 123455,
-  "username": "john_doe",
-  "email": "john.doe@example.com",
-  "secret": "hashed_password_or_secret_key",
-  "is_admin": false
-}
-```
-
-### Cấu trúc chi tiết:
-- **user_id**: Định danh duy nhất cho user (range: 0 - 999,999)
-- **username**: Tên đăng nhập của user
-- **email**: Địa chỉ email của user
-- **secret**: Mật khẩu đã hash hoặc secret key để xác thực
-- **is_admin**: true/false - user có phải admin hay không
-
-
-## 2. Admin Question Bank
+## 1. Admin Question Bank
 
 Lưu trữ các câu hỏi do admin nhập từ file PDF/Image sau khi được extract.
 
@@ -102,7 +78,7 @@ Hỗ trợ 2 loại câu hỏi:
   - **correct_answer**: Index của đáp án đúng (0-3)
 
 
-## 3. User Exam
+## 2. User Exam
 
 Lưu trữ đề thi của từng user - gồm 40 câu hỏi được generate từ Admin Bank hoặc tạo mới bằng AI.
 
@@ -173,7 +149,7 @@ Lưu trữ đề thi của từng user - gồm 40 câu hỏi được generate t
   - **Câu hỏi tham chiếu từ Admin Question Bank**: Chỉ lưu `id` + `admin_question_id` (ví dụ: id 1345678899, admin_question_id 567890122)
 
 
-## 4. User Attempt
+## 3. User Attempt
 
 Lưu trữ kết quả làm bài của user cho mỗi đề thi.
 
@@ -224,7 +200,7 @@ Lưu trữ kết quả làm bài của user cho mỗi đề thi.
   - **feedback**: Giải thích từ LLM về câu trả lời, ngắn gọn trong 1 câu.
 
 
-## 5. Chat History
+## 4. Chat History
 
 Lưu trữ lịch sử cuộc trò chuyện của user về các câu hỏi.
 
