@@ -4,7 +4,6 @@
 
 ### Layer 1: Presentation Layer
 - Frontend Web Application (React/Vue) host trên S3 + CloudFront
-- Mobile App (optional)
 
 ### Layer 2: API Gateway Layer
 - AWS API Gateway: Routing, rate limiting, authentication validation
@@ -60,57 +59,7 @@ graph TD
 
 **JSON Structure:**
 
-**1. Admin Question Bank**
-```json
-{
-  "questions": [
-    {
-      "id": "Q001",
-      "type": "multiple_choice",
-      "content": "What is the correct form of the verb?",
-      "options": [
-        "I go to school",
-        "I goes to school",
-        "I going to school",
-        "I am go to school"
-      ],
-      "correct_answer": 0,
-      "explanation": "The correct form is 'I go to school' because...",
-      "tags": ["grammar", "present_simple"]
-    }
-  ]
-}
-```
-
-**2. User Question Bank (Exam)**
-```json
-{
-  "exam_id": "EXAM_USER_2024_001",
-  "questions": [
-    {
-      "id": "UQ001",
-      "is_generated": false,
-      "admin_question_id": "Q001",
-      "type": "multiple_choice",
-      "content": "What is the correct form of the verb?",
-      "options": [
-        "I go to school",
-        "I goes to school",
-        "I going to school",
-        "I am go to school"
-      ],
-      "correct_answer": 0,
-      "explanation": "The correct form is 'I go to school' because...",
-      "tags": ["grammar", "present_simple"]
-    },
-    {
-      "id": "UQ002",
-      "is_generated": true,
-      "admin_question_id": "Q050"
-    }
-  ]
-}
-```
+Xem chi tiết tại file [database-schema.md](database-schema.md)
 
 ### 2.2 User Workflow - Tạo Đề và Làm Bài
 
@@ -118,13 +67,14 @@ graph TD
 graph TD
     A["User"] -->|Đăng nhập| B["Cognito"]
     B -->|Xác thực| C["User"]
-    C -->|Yêu cầu tạo đề| D["API Gateway"]
+    C -->|Yêu cầu tạo đề THPT| D["API Gateway"]
     D -->|Gọi| E["Lambda Exam Generator"]
-    E -->|Query| F["DynamoDB Admin Question Bank"]
-    E -->|Gửi request| G["IBM watsonx.ai"]
-    G -->|Tạo đề dựa trên:<br/>- Difficulty level<br/>- Topic distribution<br/>- THPT format| E
-    E -->|Lưu đề thi| H["DynamoDB User Question Bank"]
-    H -->|Trả về đề thi| C
+    E -->|Query 40 câu:<br/>mỗi câu chọn ngẫu nhiên| F["DynamoDB Admin Question Bank"]
+    F -->|Trả về câu hỏi từ Admin Bank| E
+    E -->|Cho mỗi câu: 80% lấy từ Admin Bank,<br/>20% dùng LLM tạo mới| G["IBM watsonx.ai"]
+    G -->|Câu hỏi mới dựa vào Admin Bank| E
+    E -->|Lưu toàn bộ 40 câu<br/>với exam_id| H["DynamoDB User Question Bank"]
+    H -->|Trả về 40 câu hỏi<br/>với exam_id tương ứng| C
     C -->|Làm bài| I["Test Interface"]
     I -->|Gửi câu trả lời| J["API Gateway"]
     J -->|Gọi| K["Lambda Grading Function"]
@@ -153,64 +103,6 @@ graph TD
     B -->|Hiển thị kết quả| A
     D -->|Lưu lịch sử chat| G
 ```
-
-## 3. PHÂN CÔNG AWS vs IBM
-
-### AWS Responsibilities:
-- Infrastructure hosting (compute, storage, networking)
-- Authentication & authorization
-- Document processing và OCR
-- Database và data persistence
-- API management
-- Static content delivery
-
-### IBM Responsibilities:
-- Large Language Model services
-- Natural language understanding
-- Generative AI cho tạo đề, chấm bài
-- Conversational AI cho chat
-- AI model training/fine-tuning (nếu cần customize)
-
-## 4. CÁC THÀNH PHẦN CHÍNH
-
-### 4.1 Admin Portal Components
-- File Upload Interface
-- Extraction Status Dashboard
-- Question Bank Management
-- Manual Review/Edit Interface
-
-### 4.2 User Portal Components
-- Authentication UI
-- Exam Selection/Generation Interface
-- Test Taking Interface (timer, question navigation)
-- Results Dashboard
-- Interactive Chat per Question
-- Progress Tracking
-
-### 4.3 Backend Services
-- Authentication Service (Cognito)
-- File Processing Service (Lambda + Textract)
-- Exam Generation Service (Lambda + IBM AI)
-- Grading Service (Lambda + IBM AI)
-- Chat Service (Lambda + IBM AI)
-- Data Access Layer (Lambda + DynamoDB)
-
-## 5. TÍCH HỢP IBM WATSONX
-
-### 5.1 Exam Generation
-- Endpoint: IBM watsonx.ai foundation models
-- Input: Question bank metadata, user level, topic preferences
-- Output: Structured exam with 50 questions following THPT format
-
-### 5.2 Grading Engine
-- Input: Questions + correct answers + user answers
-- Processing: Evaluate correctness, generate explanations
-- Output: Score, detailed feedback per question
-
-### 5.3 Chat Assistant
-- Model: Conversational AI model from watsonx
-- Context: Question, correct answer, user answer, learning objectives
-- Capability: Explain concepts, answer follow-up questions, provide examples
 
 ## 6. BẢO MẬT VÀ HIỆU NĂNG
 
